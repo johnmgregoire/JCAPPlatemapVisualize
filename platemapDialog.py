@@ -17,25 +17,25 @@ class platemapDialog(QDialog):
 
         self.techniquedictlist=[]
         
-        self.plotw_select=plotwidget(self)
-        self.plotw_select.axes.set_xlabel('')
-        self.plotw_select.axes.set_ylabel('')
-        self.plotw_select.axes.set_aspect(1)
+#        self.plotw_select=plotwidget(self)
+#        self.plotw_select.axes.set_xlabel('')
+#        self.plotw_select.axes.set_ylabel('')
+#        self.plotw_select.axes.set_aspect(1)
         
-        self.plotw_plate=plotwidget(self)
-        self.plotw_plate.axes.set_xlabel('')
-        self.plotw_plate.axes.set_ylabel('')
-        self.plotw_plate.axes.set_aspect(1)
-        
+#        self.plotw_plate=plotwidget(self)
+#        self.plotw_plate.axes.set_xlabel('')
+#        self.plotw_plate.axes.set_ylabel('')
+#        self.plotw_plate.axes.set_aspect(1)
+#        
         self.plotw_tern=plotwidget(self)
         self.plotw_tern.axes.set_xlabel('')
         self.plotw_tern.axes.set_ylabel('')
         self.plotw_tern.axes.set_aspect(1)
         
-##        self.plotw_quat=plotwidget(self, projection3d=True)
-#        self.plotw_quat.axes.set_xlabel('')
-#        self.plotw_quat.axes.set_ylabel('')
-        #self.plotw_quat.axes.set_aspect(1)
+        self.plotw_quat=plotwidget(self, projection3d=True)
+        self.plotw_quat.axes.set_xlabel('')
+        self.plotw_quat.axes.set_ylabel('')
+        self.plotw_quat.axes.set_aspect(1)
         
 ##        self.plotw_aux=plotwidget(self)
 #        self.plotw_aux.axes.set_xlabel('')
@@ -45,8 +45,8 @@ class platemapDialog(QDialog):
         axrect=[0.82, 0.1, 0.04, 0.8]
         
         
-        self.plotw_plate.fig.subplots_adjust(left=0, right=axrect[0]-.01)
-        self.cbax_plate=self.plotw_plate.fig.add_axes(axrect)
+#        self.plotw_plate.fig.subplots_adjust(left=0, right=axrect[0]-.01)
+#        self.cbax_plate=self.plotw_plate.fig.add_axes(axrect)
         
 #        self.plotw_tern.fig.subplots_adjust(left=0, right=axrect[0]-.01)
 #        self.cbax_tern=self.plotw_tern.fig.add_axes(axrect)
@@ -145,12 +145,12 @@ class platemapDialog(QDialog):
 #        legendlayout.addWidget(self.legendselectLineEdit)
         
         self.fileLineEdit=QLineEdit()        
-        self.fileLineEdit.setText('/Users/Solrisa/Documents/platevisualizer_ui/Plate28.rtf')
+        self.fileLineEdit.setText('/Users/Solrisa/JCAPPlatemapVisualize/Plate28.rtf')
         fileLineEditLabel=QLabel()
         fileLineEditLabel.setText('File:\n')
         fileLineEditlayout=QVBoxLayout()
-        fileLineEditlayout.addWidget(fileLineEditLabel)
-        fileLineEditlayout.addWidget(self.fileLineEdit)
+##        fileLineEditlayout.addWidget(fileLineEditLabel)
+##        fileLineEditlayout.addWidget(self.fileLineEdit)
 
         
         expmntLineEditLabel=QLabel()
@@ -169,7 +169,7 @@ class platemapDialog(QDialog):
         sampleLineEditLabel=QLabel()
         sampleLineEditLabel.setText('Sample #:')
         self.sampleLineEdit=QLineEdit()
-        self.sampleLineEdit.setText('i.e. 254')
+        self.sampleLineEdit.setText('254')
 
 
         addFile=QPushButton()
@@ -191,10 +191,10 @@ class platemapDialog(QDialog):
         remxy=QPushButton()
         remxy.setText("remove")
         QObject.connect(remxy, SIGNAL("pressed()"), self.remValuesXY)
-        
-        
+
         addSample=QPushButton()
         addSample.setText("add")
+        QObject.connect(addSample, SIGNAL("pressed()"), self.addValuesSample)
 #        QObject.connect(addSample, SIGNAL("pressed()"), mygetopenfile)
         
         remSample=QPushButton()
@@ -232,8 +232,8 @@ class platemapDialog(QDialog):
         self.vminmaxLineEdit=QLineEdit()
         
         vminmaxlayout=QVBoxLayout()
-        vminmaxlayout.addWidget(templab)
-        vminmaxlayout.addWidget(self.vminmaxLineEdit)
+##        vminmaxlayout.addWidget(templab)
+##        vminmaxlayout.addWidget(self.vminmaxLineEdit)
 
         templab=QLabel()
         templab.setText('below,above range colors:\nEnter a char,0-1 gray,tuple,\n"None" for ignore')
@@ -244,9 +244,9 @@ class platemapDialog(QDialog):
         self.belowrangecolLineEdit.setText('0.9')
         
         outrangecollayout=QGridLayout()
-        outrangecollayout.addWidget(templab, 0, 0, 2, 1)
-        outrangecollayout.addWidget(self.belowrangecolLineEdit, 0, 1)
-        outrangecollayout.addWidget(self.aboverangecolLineEdit, 1, 1)
+##        outrangecollayout.addWidget(templab, 0, 0, 2, 1)
+##        outrangecollayout.addWidget(self.belowrangecolLineEdit, 0, 1)
+##        outrangecollayout.addWidget(self.aboverangecolLineEdit, 1, 1)
         
         self.statusLineEdit=QLineEdit()
         self.statusLineEdit.setReadOnly(True)
@@ -255,8 +255,8 @@ class platemapDialog(QDialog):
         templab.setText('DAQ time')
         self.daqtimeLineEdit=QLineEdit()
         daqtimelayout=QVBoxLayout()
-        daqtimelayout.addWidget(templab)
-        daqtimelayout.addWidget(self.daqtimeLineEdit)
+##        daqtimelayout.addWidget(templab)
+##        daqtimelayout.addWidget(self.daqtimeLineEdit)
         
         stackedtern10Button=QPushButton()
         stackedtern10Button.setText("Create stacked\ntern at 10%")
@@ -271,8 +271,8 @@ class platemapDialog(QDialog):
         self.E0SpinBox=QDoubleSpinBox()
         self.E0SpinBox.setDecimals(3)
         E0layout=QHBoxLayout()
-        E0layout.addWidget(templab)
-        E0layout.addWidget(self.E0SpinBox)
+##        E0layout.addWidget(templab)
+##        E0layout.addWidget(self.E0SpinBox)
         
         templab=QLabel()
         templab.setText('Is=I scaling:')
@@ -281,8 +281,8 @@ class platemapDialog(QDialog):
         self.IsSpinBox.setMinimum(-1000.)
         self.IsSpinBox.setValue(1.)
         Islayout=QHBoxLayout()
-        Islayout.addWidget(templab)
-        Islayout.addWidget(self.IsSpinBox)
+##        Islayout.addWidget(templab)
+##        Islayout.addWidget(self.IsSpinBox)
         
         self.overlayselectCheckBox=QCheckBox()
         self.overlayselectCheckBox.setText("overlay on\n'select' plot")
@@ -291,8 +291,8 @@ class platemapDialog(QDialog):
         templab=QLabel()
         templab.setText("'select' plot\nlegend loc (int)")
         legendlayout=QVBoxLayout()
-        legendlayout.addWidget(templab)
-        legendlayout.addWidget(self.legendselectLineEdit)
+##        legendlayout.addWidget(templab)
+##        legendlayout.addWidget(self.legendselectLineEdit)
         
         
         
@@ -304,17 +304,17 @@ class platemapDialog(QDialog):
         selectbelowButton=QPushButton()
         selectbelowButton.setText("(-INF,min)")
         QObject.connect(selectbelowButton, SIGNAL("pressed()"), self.selectbelow)
-        selectbuttonlayout.addWidget(selectbelowButton)#, 1, 0)
+##        selectbuttonlayout.addWidget(selectbelowButton)#, 1, 0)
         
         selectbetweenButton=QPushButton()
         selectbetweenButton.setText("[min,max)")
         QObject.connect(selectbetweenButton, SIGNAL("pressed()"), self.selectbetween)
-        selectbuttonlayout.addWidget(selectbetweenButton)#, 1, 1)
+##        selectbuttonlayout.addWidget(selectbetweenButton)#, 1, 1)
         
         selectaboveButton=QPushButton()
         selectaboveButton.setText("[max,INF)")
         QObject.connect(selectaboveButton, SIGNAL("pressed()"), self.selectabove)
-        selectbuttonlayout.addWidget(selectaboveButton)#, 1, 2)
+##        selectbuttonlayout.addWidget(selectaboveButton)#, 1, 2)
     
         
         selectsamplelab=QLabel()
@@ -393,9 +393,9 @@ class platemapDialog(QDialog):
 #        mainlayout.addWidget(self.lineedit, 0, 3, 1, 1)
 #        mainlayout.addWidget(self.plotw_select, 1, 0)
 #        mainlayout.addWidget(self.plotw_quat, 1, 0,1,1)
-#        mainlayout.addWidget(stackedtern30Button, 1, 1, 1, 3)
-#        mainlayout.addWidget(self.plotw_tern, 1, 1, 1, 3)
-        
+#        mainlayout.addWidget(stackedtern30Button, 1, 1)
+        mainlayout.addWidget(self.plotw_tern, 2, 1)
+        mainlayout.addWidget(self.plotw_quat, 2, 2)        
         
         self.setLayout(mainlayout)
         
@@ -686,10 +686,26 @@ class platemapDialog(QDialog):
         self.selectsamplesLineEdit.setText(s)
 
         #John explains how to evaluate lineedit: eval('['+s+']')
+    def addValuesSample(self):
+        sampleNo = self.sampleLineEdit.text()
+#            if a == sampleNo:
+#                self.browser.append(line)
+#        print sampleNo
+#        return sampleNo
+        
     def openAddFile(self):
+        samples=[]
+        xy=[]
+        compositions=[]
         file = open(self.fileLineEdit.text(), mode='r')
         for line in file:
-            self.browser.append(line)
+            for x in range(3,len(file))
+                a,comma,b=line.partition(',')
+                print a
+#            a=eval(a)
+#            samples+=[a]
+#            print samples
+            
     def addValuesComp(self):
         try:
             s=unicode(self.expmntLineEdit.text())

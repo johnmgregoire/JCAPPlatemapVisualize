@@ -264,7 +264,7 @@ class echem10axesWidget(QDialog):
         self.plotw.fig.clf()
         self.axl, self.stpl=make10ternaxes(fig=self.plotw.fig, ellabels=ellabels)
         
-        mainlayout.addWidget(self.plotw)
+####        mainlayout.addWidget(self.plotw)
         
         self.buttonBox = QDialogButtonBox(self)
         self.buttonBox.setGeometry(QRect(520, 195, 160, 26))
