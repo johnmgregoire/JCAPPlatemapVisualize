@@ -703,56 +703,22 @@ class platemapDialog(QDialog):
                             break
             keys=ls[count][1:].split(',')
         keys=[(k.partition('(')[0]).strip() for k in keys]
-        print keys
+#        print keys
         self.dlist=[]
         for l in ls[count:]:
             sl=l.split(',')
             d=dict([(k, myeval(s.strip())) for k, s in zip(keys, sl)])
-#            print d
-#            dlist.append(d)
             self.dlist+=[d]
-#            print 'yayayaya?'
 #        return self.dlist
-#        print self.dlist.keys()
-        print len(self.dlist)
-
-#            for x in range(3,len(file))
-#                a,comma,b=line.partition(',')
-#                print a
-#            a=eval(a)
-#            samples+=[a]
-#            print samples
+#        print len(self.dlist)
 
     def addValuesSample(self):
         sampleNo = int(self.sampleLineEdit.text())
- #       print self.dlist[]
-#        print type(key['Sample'])
-        print type(sampleNo)
         for key in self.dlist:
-#            print type(key['Sample'])
-#            print sampleNo
-#            print key in self.dlist
-#            print key['Sample']
             if key['Sample']==sampleNo:
-                print sampleNo
-#                if item in self.dlist==sampleNo:
-#                if item in self.dlist.items()==sampleNo:
-#            if item in self.dlist.items()==sampleNo:
-#                    print sampleNo
-                
-#        for key in self.dlist[]:
-##            smpl=(item for item in dlist if item["key"]==sampleNo).next()
-#            if  == sampleNo:
-#            self.browser.append(smpl)
-
-#        for key in dlist:    
-#            if key == sampleNo:
-#                self.browser.append(dict())
-#        for line in file:
-#            self.browser.append(line)
-#            if a == sampleNo:
-#                self.browser.append(line)
-
+#                print 'YPosition = %(y)03d' % {"y": key['y']}
+                statement = 'Sample = %(sample)s, XPosition = %(x)s, and YPosition = %(y)s' % {"sample": key['Sample'], "x": key['x'], "y": key['y']}
+                self.browser.append(statement)
        
     def addValuesComp(self):
         try:
