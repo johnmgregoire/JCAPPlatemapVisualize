@@ -145,7 +145,7 @@ class platemapDialog(QDialog):
 #        legendlayout.addWidget(self.legendselectLineEdit)
         
         self.fileLineEdit=QLineEdit()        
-        self.fileLineEdit.setText('/Users/Solrisa/JCAPPlatemapVisualize/Plate28.rtf')
+        self.fileLineEdit.setText('/Users/Solrisa/JCAPPlatemapVisualize/0028-04-0710-mp.txt')
         fileLineEditLabel=QLabel()
         fileLineEditLabel.setText('File:\n')
         fileLineEditlayout=QVBoxLayout()
@@ -685,27 +685,75 @@ class platemapDialog(QDialog):
         s=','.join(instr).strip().strip(',').strip()
         self.selectsamplesLineEdit.setText(s)
 
-        #John explains how to evaluate lineedit: eval('['+s+']')
-    def addValuesSample(self):
-        sampleNo = self.sampleLineEdit.text()
-#            if a == sampleNo:
-#                self.browser.append(line)
-#        print sampleNo
-#        return sampleNo
-        
+        #John explains how to evaluate lineedit: eval('['+s+']')        
     def openAddFile(self):
-        samples=[]
-        xy=[]
-        compositions=[]
-        file = open(self.fileLineEdit.text(), mode='r')
-        for line in file:
-            for x in range(3,len(file))
-                a,comma,b=line.partition(',')
-                print a
+#    def readsingleplatemaptxt(self):
+        f=open(self.fileLineEdit.text(), mode='r')
+        
+        lsold=f.readlines()
+        f.close()
+        ls=[]
+        for line in lsold:
+                    if not line.strip():
+                            continue
+                    else:
+                            ls.append(line)
+        for count, l in enumerate(ls, start=0):
+            if not l.startswith('%'):
+                            break
+            keys=ls[count][1:].split(',')
+        keys=[(k.partition('(')[0]).strip() for k in keys]
+        print keys
+        self.dlist=[]
+        for l in ls[count:]:
+            sl=l.split(',')
+            d=dict([(k, myeval(s.strip())) for k, s in zip(keys, sl)])
+#            print d
+#            dlist.append(d)
+            self.dlist+=[d]
+#            print 'yayayaya?'
+#        return self.dlist
+#        print self.dlist.keys()
+        print len(self.dlist)
+
+#            for x in range(3,len(file))
+#                a,comma,b=line.partition(',')
+#                print a
 #            a=eval(a)
 #            samples+=[a]
 #            print samples
-            
+
+    def addValuesSample(self):
+        sampleNo = int(self.sampleLineEdit.text())
+ #       print self.dlist[]
+#        print type(key['Sample'])
+        print type(sampleNo)
+        for key in self.dlist:
+#            print type(key['Sample'])
+#            print sampleNo
+#            print key in self.dlist
+#            print key['Sample']
+            if key['Sample']==sampleNo:
+                print sampleNo
+#                if item in self.dlist==sampleNo:
+#                if item in self.dlist.items()==sampleNo:
+#            if item in self.dlist.items()==sampleNo:
+#                    print sampleNo
+                
+#        for key in self.dlist[]:
+##            smpl=(item for item in dlist if item["key"]==sampleNo).next()
+#            if  == sampleNo:
+#            self.browser.append(smpl)
+
+#        for key in dlist:    
+#            if key == sampleNo:
+#                self.browser.append(dict())
+#        for line in file:
+#            self.browser.append(line)
+#            if a == sampleNo:
+#                self.browser.append(line)
+
+       
     def addValuesComp(self):
         try:
             s=unicode(self.expmntLineEdit.text())
