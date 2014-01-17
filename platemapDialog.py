@@ -32,7 +32,11 @@ class platemapDialog(QDialog):
 
         
         self.fileLineEdit=QLineEdit()        
+<<<<<<< HEAD
         self.fileLineEdit.setText('')
+=======
+        self.fileLineEdit.setText('/Users/Solrisa/JCAPPlatemapVisualize/0028-04-0710-mp.txt')
+>>>>>>> origin/master
         fileLineEditLabel=QLabel()
         fileLineEditLabel.setText('File:\n')
         fileLineEditlayout=QVBoxLayout()
@@ -295,6 +299,7 @@ class platemapDialog(QDialog):
                 sampleNo=int(eval(sampleNostr.strip()))
                 inds=[self.smplist.index(sampleNo)]
         except:
+<<<<<<< HEAD
             print 'error adding samples'
             return
         for i in inds:
@@ -313,6 +318,66 @@ class platemapDialog(QDialog):
         
     def addValuesComp(self, remove=False):
         compstr = str(self.compLineEdit.text())
+=======
+            print 'NEED TO PERFORM A PLOT TO DEFINE THE MIN,MAX RANGE BEFORE SELECTING SAMPLES'
+        idlist=[]
+        for d in self.techniquedictlist:
+            if d['FOM']>=vmax:
+                idlist+=[d['Sample']]
+        if len(idlist)>0:
+            self.addtoselectsamples(idlist)
+            
+    def addtoselectsamples(self, idlist):
+        instr=str(self.selectsamplesLineEdit.text()).strip().split(',')
+        instr+=[`n` for n in idlist if len(`n`)>0]
+        s=','.join(instr).strip().strip(',').strip()
+        self.selectsamplesLineEdit.setText(s)
+
+        #John explains how to evaluate lineedit: eval('['+s+']')        
+    def openAddFile(self):
+#    def readsingleplatemaptxt(self):
+        f=open(self.fileLineEdit.text(), mode='r')
+        
+        lsold=f.readlines()
+        f.close()
+        ls=[]
+        for line in lsold:
+                    if not line.strip():
+                            continue
+                    else:
+                            ls.append(line)
+        for count, l in enumerate(ls, start=0):
+            if not l.startswith('%'):
+                            break
+            keys=ls[count][1:].split(',')
+        keys=[(k.partition('(')[0]).strip() for k in keys]
+#        print keys
+        self.dlist=[]
+        for l in ls[count:]:
+            sl=l.split(',')
+            d=dict([(k, myeval(s.strip())) for k, s in zip(keys, sl)])
+            self.dlist+=[d]
+#        return self.dlist
+#        print len(self.dlist)
+
+    def addValuesSample(self):
+        sampleNo = int(self.sampleLineEdit.text())
+        for key in self.dlist:
+            if key['Sample']==sampleNo:
+#                print 'YPosition = %(y)03d' % {"y": key['y']}
+                statement = 'Sample = %(sample)s, XPosition = %(x)s, and YPosition = %(y)s' % {"sample": key['Sample'], "x": key['x'], "y": key['y']}
+                self.browser.append(statement)
+       
+    def addValuesComp(self):
+        try:
+            s=unicode(self.expmntLineEdit.text())
+            self.browser.append("%s = <b>%s</b>" % (s, eval('['+s+']')))
+        except:
+            self.browser.append("<font color=red>%s is invalid!</font>" %s)
+            print 'Need to write a set of compositions'
+
+    def addValuesXY(self):
+>>>>>>> origin/master
         try:
             abcd=numpy.array(eval('['+compstr.strip()+']'))
             if abcd.sum()<=0.:
