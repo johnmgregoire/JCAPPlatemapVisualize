@@ -5,7 +5,7 @@
 
 # requires numpy and svgwrite modules
 import numpy
-import svgwrite
+#import svgwrite
 
 ## DEFINE plate size (mm)
 dpx = 152.4
@@ -65,34 +65,34 @@ def mapsvg(f, s, ml=None, allch=False, gs=False):
 	d = readsingleplatemaptxt(f)
 
 	# create svg file
-	svg_document = svgwrite.Drawing(filename = s,
-									size = (str(dpx) + 'mm', str(dpy) + 'mm'))
-
-	# check if we're drawing all 8 channels, then parse list and write samples into svg
-	for count, sample in enumerate(d, start=0):
-		if allch:
-			rgbstr = "rgb" + str(cmyk_to_rgb(d[count]['A'] + d[count]['E'], d[count]['B'] + d[count]['F'], d[count]['C'] + d[count]['G'], d[count]['D'] + d[count]['H'], gs))
-		else:
-			rgbstr = "rgb" + str(cmyk_to_rgb(d[count]['A'], d[count]['B'], d[count]['C'], d[count]['D'], gs))
-		svg_document.add(svg_document.rect(insert = tuple((str(d[count]['x']) + 'mm', str(dpy - d[count]['y']) + 'mm')),
-											size = tuple((str(d[count]['dx']) + 'mm', str(d[count]['dy']) + 'mm')),
-											stroke_width = "0",
-											fill = rgbstr))
-	
-	# circle selected sample_id's in red, add text
-	if ml and len(ml) <= 26:
-		abc = map(chr, range(65, 91))
-		for count, sid in enumerate(ml):
-			svg_document.add(svg_document.circle(center = tuple((str(d[sid-1]['x'] + d[sid-1]['dx']*0.5) + 'mm', str(dpy - d[sid-1]['y'] + d[sid-1]['dy']*0.5) + 'mm')),
-												r = str(0.75*d[sid-1]['dx']) + 'mm',
-												stroke_width = "1",
-												stroke = "red",
-												fill = "none"))
-			svg_document.add(svg_document.text(text = abc[count],
-												insert = tuple((str(d[sid-1]['x'] - 1) + 'mm', str(dpy - d[sid-1]['y'] + d[sid-1]['dy'] + 1) + 'mm')),
-												fill = "red",
-												style = "font-size:6px; font-family:Monospace; font-weight:bold"))
-	elif ml and len(ml) > 26:
-		print 'More markers than alphabet. Shorten marker list to 26 elements or less'
-
-	svg_document.save()
+#	svg_document = svgwrite.Drawing(filename = s,
+#									size = (str(dpx) + 'mm', str(dpy) + 'mm'))
+#
+#	# check if we're drawing all 8 channels, then parse list and write samples into svg
+#	for count, sample in enumerate(d, start=0):
+#		if allch:
+#			rgbstr = "rgb" + str(cmyk_to_rgb(d[count]['A'] + d[count]['E'], d[count]['B'] + d[count]['F'], d[count]['C'] + d[count]['G'], d[count]['D'] + d[count]['H'], gs))
+#		else:
+#			rgbstr = "rgb" + str(cmyk_to_rgb(d[count]['A'], d[count]['B'], d[count]['C'], d[count]['D'], gs))
+#		svg_document.add(svg_document.rect(insert = tuple((str(d[count]['x']) + 'mm', str(dpy - d[count]['y']) + 'mm')),
+#											size = tuple((str(d[count]['dx']) + 'mm', str(d[count]['dy']) + 'mm')),
+#											stroke_width = "0",
+#											fill = rgbstr))
+#	
+#	# circle selected sample_id's in red, add text
+#	if ml and len(ml) <= 26:
+#		abc = map(chr, range(65, 91))
+#		for count, sid in enumerate(ml):
+#			svg_document.add(svg_document.circle(center = tuple((str(d[sid-1]['x'] + d[sid-1]['dx']*0.5) + 'mm', str(dpy - d[sid-1]['y'] + d[sid-1]['dy']*0.5) + 'mm')),
+#												r = str(0.75*d[sid-1]['dx']) + 'mm',
+#												stroke_width = "1",
+#												stroke = "red",
+#												fill = "none"))
+#			svg_document.add(svg_document.text(text = abc[count],
+#												insert = tuple((str(d[sid-1]['x'] - 1) + 'mm', str(dpy - d[sid-1]['y'] + d[sid-1]['dy'] + 1) + 'mm')),
+#												fill = "red",
+#												style = "font-size:6px; font-family:Monospace; font-weight:bold"))
+#	elif ml and len(ml) > 26:
+#		print 'More markers than alphabet. Shorten marker list to 26 elements or less'
+#
+#	svg_document.save()
