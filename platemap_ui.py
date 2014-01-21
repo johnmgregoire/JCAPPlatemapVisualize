@@ -66,16 +66,18 @@ wd=os.getcwd()
 sys.path.append(os.path.join(PyCodePath,'PythonCompositionPlots'))
 from myternaryutility import TernaryPlot
 from myquaternaryutility import QuaternaryPlot
-from quaternary_FOM_stackedtern2 import *
+from quaternary_FOM_stackedtern5 import *
+from quaternary_FOM_stackedtern10 import *
+from quaternary_FOM_stackedtern20 import *
 from quaternary_FOM_stackedtern30 import *
 
-sys.path.append(os.path.join(PyCodePath,'JCAPPyDBComm'))
-from mysql_dbcommlib import *
-
-sys.path.append(os.path.join(PyCodePath, 'PythonCodeSecureFiles'))
-from paths import *
-if os.path.isdir(EchemSavePath):
-    os.chdir(EchemSavePath)
+#sys.path.append(os.path.join(PyCodePath,'JCAPPyDBComm'))
+#from mysql_dbcommlib import *
+#
+#sys.path.append(os.path.join(PyCodePath, 'PythonCodeSecureFiles'))
+#from paths import *
+#if os.path.isdir(EchemSavePath):
+#    os.chdir(EchemSavePath)
 
 
     
@@ -208,49 +210,49 @@ class userinputDialog(QDialog):
             idialog=messageDialog(self, 'problem with conversion of ' + tup[0])
             idialog.exec_()
 
-class selectdbsessionsDialog(QDialog):
-    def __init__(self, parent, ex_trange_techl, maxsessions=15, title='Select DB experiment sessions to analyze'):
-        super(selectdbsessionsDialog, self).__init__(parent)
-        self.setWindowTitle(title)
-        mainlayout=QVBoxLayout()
-        
-        self.cblist=[]
-        self.cbinds=[]
-        for count,  (ex, (t0, t1), techl) in enumerate(ex_trange_techl[:maxsessions]):
-            cb=QCheckBox()
-            cb.setText('exp %d: %s to %s, %s' %(ex, str(t0), str(t1), ','.join(techl)))
-            cb.setChecked(False)
-            mainlayout.addWidget(cb)
-            self.cblist+=[cb]
-            self.cbinds+=[[count]]
-        if len(ex_trange_techl)>maxsessions:
-            cb=QCheckBox()
-            ex, (t0, t1), techl=ex_trange_techl[maxsessions]
-            ex2, (t02, t12), techl2=ex_trange_techl[-1]
-            techl=list(set(techl+techl2))
-            cb.setText('exp %d-%d: %s to %s, %s' %(ex, ex2, str(t0), str(t12), ','.join(techl)))
-            cb.setChecked(True)
-            mainlayout.addWidget(cb)
-            self.cblist+=[cb]
-            self.cbinds+=[range(maxsessions, len(ex_trange_techl))]
-        cb.setChecked(True)
-        
-        self.buttonBox = QDialogButtonBox(self)
-        self.buttonBox.setGeometry(QRect(520, 195, 160, 26))
-        self.buttonBox.setOrientation(Qt.Horizontal)
-        self.buttonBox.setStandardButtons(QDialogButtonBox.Ok)
-        QObject.connect(self.buttonBox, SIGNAL("accepted()"), self.accept)
-        mainlayout.addWidget(self.buttonBox)
-         
-        QObject.connect(self.buttonBox,SIGNAL("accepted()"),self.ExitRoutine)
-        self.setLayout(mainlayout)
-        QMetaObject.connectSlotsByName(self)
-    def ExitRoutine(self):
-        self.selectinds=[]
-        for cb, l in zip(self.cblist, self.cbinds):
-            if cb.isChecked():
-                self.selectinds+=l
-                
+#class selectdbsessionsDialog(QDialog):
+#    def __init__(self, parent, ex_trange_techl, maxsessions=15, title='Select DB experiment sessions to analyze'):
+#        super(selectdbsessionsDialog, self).__init__(parent)
+#        self.setWindowTitle(title)
+#        mainlayout=QVBoxLayout()
+#        
+#        self.cblist=[]
+#        self.cbinds=[]
+#        for count,  (ex, (t0, t1), techl) in enumerate(ex_trange_techl[:maxsessions]):
+#            cb=QCheckBox()
+#            cb.setText('exp %d: %s to %s, %s' %(ex, str(t0), str(t1), ','.join(techl)))
+#            cb.setChecked(False)
+#            mainlayout.addWidget(cb)
+#            self.cblist+=[cb]
+#            self.cbinds+=[[count]]
+#        if len(ex_trange_techl)>maxsessions:
+#            cb=QCheckBox()
+#            ex, (t0, t1), techl=ex_trange_techl[maxsessions]
+#            ex2, (t02, t12), techl2=ex_trange_techl[-1]
+#            techl=list(set(techl+techl2))
+#            cb.setText('exp %d-%d: %s to %s, %s' %(ex, ex2, str(t0), str(t12), ','.join(techl)))
+#            cb.setChecked(True)
+#            mainlayout.addWidget(cb)
+#            self.cblist+=[cb]
+#            self.cbinds+=[range(maxsessions, len(ex_trange_techl))]
+#        cb.setChecked(True)
+#        
+#        self.buttonBox = QDialogButtonBox(self)
+#        self.buttonBox.setGeometry(QRect(520, 195, 160, 26))
+#        self.buttonBox.setOrientation(Qt.Horizontal)
+#        self.buttonBox.setStandardButtons(QDialogButtonBox.Ok)
+#        QObject.connect(self.buttonBox, SIGNAL("accepted()"), self.accept)
+#        mainlayout.addWidget(self.buttonBox)
+#         
+#        QObject.connect(self.buttonBox,SIGNAL("accepted()"),self.ExitRoutine)
+#        self.setLayout(mainlayout)
+#        QMetaObject.connectSlotsByName(self)
+#    def ExitRoutine(self):
+#        self.selectinds=[]
+#        for cb, l in zip(self.cblist, self.cbinds):
+#            if cb.isChecked():
+#                self.selectinds+=l
+#                
 
 
 
