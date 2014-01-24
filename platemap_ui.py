@@ -20,7 +20,7 @@ import matplotlib.mlab as mlab
 import pylab
 import pickle
 
-from mapspread import *
+from readmap import *
 
 PyCodePath=os.path.split(os.path.split(os.path.realpath(__file__))[0])[0]
 print PyCodePath
@@ -82,8 +82,12 @@ from quaternary_FOM_stackedtern30 import *
 #if os.path.isdir(EchemSavePath):
 #    os.chdir(EchemSavePath)
 
-
-    
+try:
+    wd=os.path.split(os.path.split(os.path.split(os.path.split(os.path.realpath(__file__))[0])[0])[0])[0]
+    os.chdir(wd)
+except:
+    pass
+        
 class messageDialog(QDialog):
     def __init__(self, parent=None, title=''):
         super(messageDialog, self).__init__(parent)

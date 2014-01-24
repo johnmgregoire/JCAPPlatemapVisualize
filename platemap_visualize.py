@@ -7,6 +7,8 @@ from PyQt4.QtGui import *
 
 from platemapDialog import *
 
+
+
 def start(previousmm=None):
     mainapp=QApplication(sys.argv)
 
