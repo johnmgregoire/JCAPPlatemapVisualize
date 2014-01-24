@@ -28,7 +28,7 @@ class platemapDialog(QDialog):
         self.plotw_plate.fig.subplots_adjust(left=0, right=1)
 
         QObject.connect(self.plotw_plate, SIGNAL("genericclickonplot"), self.plateclickprocess)
-
+        QObject.connect(self.plotw_stack, SIGNAL("genericclickonplot"), self.stackclickprocess)
 
         
         self.fileLineEdit=QLineEdit()        
@@ -198,13 +198,41 @@ class platemapDialog(QDialog):
 
     
 
-    def plateclickprocess(self, coords_button):
+    def plateclickprocess(self, coords_button_ax):
         if len(self.x)==0:
             return
         critdist=2.
-        xc, yc, button=coords_button
+        xc, yc, button, ax=coords_button_ax
 
         dist=((self.x-xc)**2+(self.y-yc)**2)**.5
+        if min(dist)<critdist:
+            self.selectind=numpy.argmin(dist)
+            self.plotselect()
+
+        if button==3:#right click
+            self.addtoselectsamples()
+        elif button==2:#center click
+            self.remfromselectsamples()
+
+    def stackclickprocess(self, coords_button_ax):
+        if len(self.x)==0:
+            return
+        critdist=.1
+        xc, yc, button, ax=coords_button_ax
+        if not ax in self.plotw_stack_axl:
+            return
+        i=self.plotw_stack_axl.index(ax)
+        dclick=self.stackcompinterv*i
+        bclick=yc*2./numpy.sqrt(3.)
+        aclick=1.-xc-bclick/2.
+        cclick=1.-aclick-bclick
+        compclick=numpy.array([aclick, bclick, cclick, dclick])
+        print compclick
+        compclick[:3]*=1.-dclick
+        print compclick
+        permcomp=self.comp[:, self.comppermuteinds]
+        
+        dist=numpy.array([(((c-compclick)**2).sum())**.5 for c in permcomp])
         if min(dist)<critdist:
             self.selectind=numpy.argmin(dist)
             self.plotselect()
@@ -236,12 +264,10 @@ class platemapDialog(QDialog):
         i=self.ternstackComboBox.currentIndex()
         self.ellabels=['A', 'B', 'C', 'D', 'A', 'B', 'C'][i:i+4]
         self.comppermuteinds=[0, 1, 2, 3, 0, 1, 2][i:i+4]
-        print '**********', self.comppermuteinds
-        print replot
         if replot:
             self.stackedplotsetup()
             self.plot()
-            print 'updated'
+
     
     def remfromselectsamples(self):# self.selectind
         if not self.selectind in self.platemapselectinds:
@@ -271,7 +297,8 @@ class platemapDialog(QDialog):
         elif intervchoice==30:
             makefcn=make30ternaxes
             self.stackplotfcn=scatter_30axes
-            
+        
+        self.stackcompinterv=1./intervchoice
         self.plotw_stack.fig.clf()
         self.plotw_stack_axl, self.plotw_stack_stpl=makefcn(fig=self.plotw_stack.fig, ellabels=self.ellabels)
         print self.ellabels

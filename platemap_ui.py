@@ -362,5 +362,5 @@ class plotwidget(FigureCanvas):
             arrayxy=[event.xdata, event.ydata]
             print 'clicked on image: array indeces ', arrayxy, ' using button', event.button
             self.clicklist+=[arrayxy]
-            self.emit(SIGNAL("genericclickonplot"), [event.xdata, event.ydata, event.button])
+            self.emit(SIGNAL("genericclickonplot"), [event.xdata, event.ydata, event.button, event.inaxes])
 
