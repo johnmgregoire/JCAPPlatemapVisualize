@@ -43,7 +43,15 @@ class platemapDialog(QDialog):
         codesLineEditLabel.setText('only show these codes:\n')
         codesLineEditlayout=QVBoxLayout()
 
-        
+        ternstackComboBoxLabel=QLabel()
+        ternstackComboBoxLabel.setText('Pseudo-tern\nstack wrt:')
+        self.ternstackComboBox=QComboBox()
+        self.ternstackComboBox.clear()
+        for i, l in enumerate(['D', 'A', 'B', 'C']):
+                self.ternstackComboBox.insertItem(i, l)
+        self.ternstackComboBox.setCurrentIndex(0)
+        QObject.connect(self.ternstackComboBox,SIGNAL("activated(QString)"),self.setupcomppermute)
+        self.setupcomppermute(replot=False)
         compLineEditLabel=QLabel()
         compLineEditLabel.setText('Composition:\n use the order in the data files\n(as in a,b,c,d)')
         self.compLineEdit=QLineEdit()
@@ -114,6 +122,8 @@ class platemapDialog(QDialog):
         
         ctrllayout.addWidget(addFile, 0, 1)
         #ctrllayout.addWidget(savesampleButton, 0, 2) don't have save yet, just copy text
+        ctrllayout.addWidget(ternstackComboBoxLabel, 1, 1)
+        ctrllayout.addWidget(self.ternstackComboBox, 1, 2)
         ctrllayout.addWidget(addComp, 2, 1)
         ctrllayout.addWidget(remComp, 2, 2)
         ctrllayout.addWidget(addxy, 3, 1)
@@ -146,13 +156,6 @@ class platemapDialog(QDialog):
         
         self.linefields=[('%d', 'Sample'), ('%.2f', 'x'), ('%.2f', 'y'), ('%.2f', 'A'), ('%.2f', 'B'), ('%.2f', 'C'), ('%.2f', 'D'), ('%d', 'code')]
         
-    def updateUi(self):
-        print "test2"
-        try:
-            text = unicode(self.lineedit.text())
-            self.browser.append("%s = <b>%s</b>" % (text, eval(text)))
-        except:
-            self.browser.append("<font color=red>%s is invalid!</font>" %text)
         
     def extractlist_dlistkey(self, k):
         return [d[k] for d in self.platemapdlist]
@@ -182,7 +185,8 @@ class platemapDialog(QDialog):
         for i in self.platemapselectinds:
             fom[i]='r'
         fom=numpy.array(fom)
-        self.stackplotfcn(self.comp, fom, self.plotw_stack_stpl, s=8)
+        permcomp=self.comp[:, self.comppermuteinds]
+        self.stackplotfcn(permcomp, fom, self.plotw_stack_stpl, s=8)
         
         
         self.plotw_stack.fig.canvas.draw()
@@ -228,6 +232,17 @@ class platemapDialog(QDialog):
         self.selectsamplelines+=[self.sampleline_ind()]
         self.plot()#would be nice to only have to plot overlay of selected samples
     
+    def setupcomppermute(self, replot=True):
+        i=self.ternstackComboBox.currentIndex()
+        self.ellabels=['A', 'B', 'C', 'D', 'A', 'B', 'C'][i:i+4]
+        self.comppermuteinds=[0, 1, 2, 3, 0, 1, 2][i:i+4]
+        print '**********', self.comppermuteinds
+        print replot
+        if replot:
+            self.stackedplotsetup()
+            self.plot()
+            print 'updated'
+    
     def remfromselectsamples(self):# self.selectind
         if not self.selectind in self.platemapselectinds:
             return
@@ -235,6 +250,31 @@ class platemapDialog(QDialog):
         self.platemapselectinds.pop(i)
         self.selectsamplelines.pop(i)
         self.plot()#would be nice to only have to plot overlay of selected samples
+    
+    def stackedplotsetup(self):
+        a=numpy.sort(self.comp[:,0])
+        adiff=(a[1:]-a[:-1])
+        adiff=(adiff[adiff>.001]).mean()
+        nints=(1./adiff).round()
+        intervopts=[5, 10, 20, 30]
+        intervchoice=intervopts[numpy.argmin((nints-numpy.array(intervopts))**2)]
+        #print 'difference in A channel,  number of a intervals per 100% and stacked plot choice are:',  adiff, nints, intervchoice
+        if intervchoice==5:
+            makefcn=make5ternaxes
+            self.stackplotfcn=scatter_5axes
+        elif intervchoice==10:
+            makefcn=make10ternaxes
+            self.stackplotfcn=scatter_10axes
+        elif intervchoice==20:
+            makefcn=make20ternaxes
+            self.stackplotfcn=scatter_20axes
+        elif intervchoice==30:
+            makefcn=make30ternaxes
+            self.stackplotfcn=scatter_30axes
+            
+        self.plotw_stack.fig.clf()
+        self.plotw_stack_axl, self.plotw_stack_stpl=makefcn(fig=self.plotw_stack.fig, ellabels=self.ellabels)
+        print self.ellabels
         
     def openAddFile(self):
         p=mygetopenfile(parent=self, markstr='select platemap .txt')
@@ -257,28 +297,8 @@ class platemapDialog(QDialog):
         self.comp=numpy.array(self.extractlist_dlistkey('comp'))
         self.smplist=self.extractlist_dlistkey('Sample')
         
-        a=numpy.sort(self.comp[:,0])
-        adiff=(a[1:]-a[:-1])
-        adiff=(adiff[adiff>.001]).mean()
-        nints=(1./adiff).round()
-        intervopts=[5, 10, 20, 30]
-        intervchoice=intervopts[numpy.argmin((nints-numpy.array(intervopts))**2)]
-        #print 'difference in A channel,  number of a intervals per 100% and stacked plot choice are:',  adiff, nints, intervchoice
-        if intervchoice==5:
-            makefcn=make5ternaxes
-            self.stackplotfcn=scatter_5axes
-        elif intervchoice==10:
-            makefcn=make10ternaxes
-            self.stackplotfcn=scatter_10axes
-        elif intervchoice==20:
-            makefcn=make20ternaxes
-            self.stackplotfcn=scatter_20axes
-        elif intervchoice==30:
-            makefcn=make30ternaxes
-            self.stackplotfcn=scatter_30axes
-            
-        self.plotw_stack.fig.clf()
-        self.plotw_stack_axl, self.plotw_stack_stpl=makefcn(fig=self.plotw_stack.fig)
+        self.stackedplotsetup()
+        
         
         self.platemapselectinds=[]
         self.selectsamplelines=[]
