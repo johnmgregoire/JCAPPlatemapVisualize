@@ -8,8 +8,10 @@ from PyQt4.QtGui import *
 import operator
 import matplotlib
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
-#from matplotlib.backends.backend_qt4agg import NavigationToolbar2QTAgg as NavigationToolbar
-
+try:
+    from matplotlib.backends.backend_qt4agg import NavigationToolbar2QTAgg as NavigationToolbar
+except ImportError:
+    from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
 
 
 from matplotlib.figure import Figure
@@ -356,7 +358,7 @@ class plotwidget(FigureCanvas):
         FigureCanvas.setSizePolicy(self, QSizePolicy.Expanding, QSizePolicy.Expanding)
         FigureCanvas.updateGeometry(self)
         #NavigationToolbar(self, parent)
-        #NavigationToolbar(self, self)
+        NavigationToolbar(self, self)
         
         self.mpl_connect('button_press_event', self.myclick)
         self.clicklist=[]

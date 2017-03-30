@@ -1,6 +1,7 @@
 import matplotlib.image as mpimg
 
 from platemap_ui import *
+from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 
 class plateimagealignDialog(QDialog):
     def __init__(self, parent=None, title='', folderpath=None):
@@ -14,7 +15,7 @@ class plateimagealignDialog(QDialog):
         self.plotw_motimage.axes.set_xlabel('motor x')
         self.plotw_motimage.axes.set_ylabel('motor y')
         self.plotw_motimage.axes.set_aspect(1)
-
+        
         
         self.plotw_plate=plotwidget(self)
 
@@ -150,7 +151,7 @@ class plateimagealignDialog(QDialog):
         self.manual_motimage_scale()
     
     def manual_motimage_scale(self):
-        idialog=messageDialog(self, 'right click and enter x value then \nrepeat for 2nd x and 2 y values.\nThis is all in motor coordinates in mm \nto set the scale of the image.')
+        idialog=messageDialog(self, title='right click and enter x value then \nrepeat for 2nd x and 2 y values.\nThis is all in motor coordinates in mm \nto set the scale of the image.')
         idialog.exec_()
         self.remaining_clicks_for_scale=4
     
