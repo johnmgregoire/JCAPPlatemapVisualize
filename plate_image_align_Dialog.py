@@ -26,6 +26,10 @@ class plateimagealignDialog(QDialog):
         QObject.connect(self.plotw_plate, SIGNAL("genericclickonplot"), self.plateclickprocess)
         QObject.connect(self.plotw_motimage, SIGNAL("genericclickonplot"), self.motimageclickprocess)
 
+        self.imageextentLineEdit=QLineEdit()        
+        self.imageextentLineEdit.setText('NEED TO CALIBRATE IMAGE')
+        imageextentLineEditLabel=QLabel()
+        imageextentLineEditLabel.setText('Motor L,R,B,T:')
         
         self.fileLineEdit=QLineEdit()        
         self.fileLineEdit.setText('')
@@ -34,7 +38,7 @@ class plateimagealignDialog(QDialog):
         fileLineEditlayout=QVBoxLayout()
 
         self.codesLineEdit=QLineEdit()        
-        self.codesLineEdit.setText('0,10,20,30,40,50')
+        self.codesLineEdit.setText('')
         codesLineEditLabel=QLabel()
         codesLineEditLabel.setText('only show these codes:\n')
         codesLineEditlayout=QVBoxLayout()
@@ -98,6 +102,7 @@ class plateimagealignDialog(QDialog):
         (compLineEditLabel, self.compLineEdit, 2, 0), \
         (xyLineEditLabel, self.xyLineEdit, 3, 0),\
         (sampleLineEditLabel, self.sampleLineEdit, 4, 0),\
+        (imageextentLineEditLabel, self.imageextentLineEdit, 5, 0),\
         ]
         
         mainlayout=QGridLayout()
@@ -149,35 +154,54 @@ class plateimagealignDialog(QDialog):
         self.plotw_motimage.axes.imshow(self.image, origin='lower', interpolation='none', aspect=1)
         self.plotw_motimage.fig.canvas.draw()
         self.manual_motimage_scale()
+        self.selectind=None
     
     def manual_motimage_scale(self):
-        idialog=messageDialog(self, title='right click and enter x value then \nrepeat for 2nd x and 2 y values.\nThis is all in motor coordinates in mm \nto set the scale of the image.')
-        idialog.exec_()
-        self.remaining_clicks_for_scale=4
+        motorcalstr=userinputcaller(self, inputs=[('right click and enter x value then \nrepeat for 2nd x and 2 y values.\nThis is all in motor coordinates in mm \nto set the scale of the image.'+\
+            '\nIf you know the motor values for left,right,bottom,top\nyou can enter them here:'
+            , str)], \
+            title='instructions for image calibration',  cancelallowed=True)[0]
+        if motorcalstr.count(',')==3:
+            self.motimage_extent=[float(v.strip()) for v in motorcalstr.split(',')]
+            self.remaining_clicks_for_scale=0
+            self.reloadimagewithextent()
+        else:
+            self.remaining_clicks_for_scale=4
     
     def process_motimage_scale_click(self, xc, yc):
-        key=['first_x', 'second_x', 'first_y', 'second_y'][self.remaining_clicks_for_scale-1]
+        key=['first_x', 'second_x', 'first_y', 'second_y'][-self.remaining_clicks_for_scale]
         motorval=userinputcaller(self, inputs=[(key, float)], title='Enter mm value of motor position you clicked',  cancelallowed=False)[0]
-        if self.remaining_clicks_for_scale==4:
+        if self.remaining_clicks_for_scale==4:#first x
             self.temp_pixelval_motorval=(xc, motorval)
             self.motimage_extent=[]
-        elif self.remaining_clicks_for_scale==3:
+        elif self.remaining_clicks_for_scale==3:#second x
             #TODO
             #here the pixels clicked are self.temp_pixelval_motorval[0] and xc and the motor values those refere to are self.first_motx_pixelx[1] and motorval. calculate the linear transofmration from there
             #calculate motx_left corresponding to pixel 0. calculate motx_right corresponding to pixel self.image.shape[0]-1
+            
+            #these are temporary values to be erased:
+            motx_left=-6.
+            motx_right=100.
             self.motimage_extent+=[motx_left, motx_right]
-        elif self.remaining_clicks_for_scale==2:
+        elif self.remaining_clicks_for_scale==2:#first y
             self.temp_pixelval_motorval=(yc, motorval)
-        elif self.remaining_clicks_for_scale==1:
+        elif self.remaining_clicks_for_scale==1:#seonc dy, which means all clicks are done
             #TODO
             #here the pixels clicked are self.temp_pixelval_motorval[0] and yc and the motor values those refere to are self.first_motx_pixelx[1] and motorval. calculate the linear transofmration from there
-            #calculate moty_bottom corresponding to pixel 0. calculate motx_top corresponding to pixel self.image.shape[1]-1
-            self.motimage_extent+=[moty_bottom, motx_top]
-            self.plotw_motimage.axes.cla()
-            self.plotw_motimage.axes.imshow(self.image, origin='lower', interpolation='none', aspect=1, extent=self.motimage_extent)
-            self.plotw_motimage.fig.canvas.draw()
+            #calculate moty_bottom corresponding to pixel 0. calculate moty_top corresponding to pixel self.image.shape[1]-1
+            #these are temporary values to be erased:
+            moty_bottom=-13
+            moty_top=79
+            
+            self.motimage_extent+=[moty_bottom, moty_top]
+            self.reloadimagewithextent()
         self.remaining_clicks_for_scale-=1
         
+    def reloadimagewithextent(self):
+        self.imageextentLineEdit.setText(','.join(['%.2f' %v for v in self.motimage_extent]))
+        self.plotw_motimage.axes.cla()
+        self.plotw_motimage.axes.imshow(self.image, origin='lower', interpolation='none', aspect=1, extent=self.motimage_extent)
+        self.plotw_motimage.fig.canvas.draw()
     def extractlist_dlistkey(self, k):
         return [d[k] for d in self.platemapdlist]
         
@@ -238,22 +262,32 @@ class plateimagealignDialog(QDialog):
         xc, yc, button, ax=coords_button_ax
         if button==3:
             if self.remaining_clicks_for_scale>0:
-                self.process_motimage_scale_click(self, xc, yc)
+                self.process_motimage_scale_click(xc, yc)
             else:
                 #Here the user needs to specify a sample (for example by clicking on the platemap) and then right click the plate image
+                if self.selectind is None or self.selectind in [d['ind'] for d in self.calib__dlist]:
+                    idialog=messageDialog(self, title='ERROR: first click on plate image to select new sample')
+                    idialog.exec_()
+                    return
                 self.calib__dlist+=[dict({}, \
                     x=self.x[self.selectind], y=self.y[self.selectind], sample_no=self.platemapdlist[self.selectind]['Sample'], ind=self.selectind, \
                     motx=xc, moty=yc\
                                                  )]
+                print 'calibration data:\n', self.calib__dlist
                 if len(self.calib__dlist)>=3:
                     self.update_xmotor_interpolator()
-                    
+                
     def clearcalibpoints(self):
         self.calib__dlist=[]
         self.calc_motx_from_pmxy=lambda pmx, pmy: pmx
         self.calc_moty_from_pmxy=lambda pmx, pmy: pmy
     def update_xmotor_interpolator(self):
         #TODO: self.calib__dlist is a list and every value has motor x,y and platemap x,y values to build 2 interp2d functions needed below
+        
+        xp_boundary=numpy.array([d['x'] for d in self.calib__dlist])
+        yp_boundary=numpy.array([d['y'] for d in self.calib__dlist])
+        xm_boundary=numpy.array([d['motx'] for d in self.calib__dlist])
+        ym_boundary=numpy.array([d['moty'] for d in self.calib__dlist])
         
         self.calc_motx_from_pmxy=lambda pmx, pmy: pmx#TODO: replace pmx here with the interpolator function, and similarly for pmy below
         self.calc_moty_from_pmxy=lambda pmx, pmy: pmy
@@ -296,8 +330,11 @@ class plateimagealignDialog(QDialog):
 
         self.platemapdlist=readsingleplatemaptxt(p)
         
-        codesstr=str(self.codesLineEdit.text())
-        self.filterbycodes=eval('['+codesstr+']')
+        codesstr=str(self.codesLineEdit.text()).strip()
+        if len(codesstr)==0:
+            self.filterbycodes=sorted(list(set([d['code'] for d in self.platemapdlist ])))
+        else:
+            self.filterbycodes=eval('['+codesstr+']')
         self.platemapdlist=[d for d in self.platemapdlist if d['code'] in self.filterbycodes]
         for d in self.platemapdlist:
             d['comp']=numpy.array([d[k] for k in ['A', 'B', 'C', 'D']])
