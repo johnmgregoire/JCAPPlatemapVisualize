@@ -1,5 +1,5 @@
 import matplotlib.image as mpimg
-import scipy
+import scipy, scipy.interpolate
 
 from platemap_ui import *
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
@@ -200,7 +200,7 @@ class plateimagealignDialog(QDialog):
             return
             
         ans=\
-         userinputcaller(self, inputs=[('sample shape\0=circle,1=square', int, '0'), \
+         userinputcaller(self, inputs=[('sample shape\n0=circle,1=square', int, '0'), \
                                                     ('sample\nwidth(mm)', float, '1.'), \
                                                     ('bcknd_shape\n0,1 or -1=none', int, '-1'), \
                                                     ('bcknd min\nwidth(mm)', float, '1.1'), \
@@ -317,9 +317,10 @@ class plateimagealignDialog(QDialog):
             #calculate moty_bottom corresponding to pixel 0. calculate moty_top corresponding to pixel self.image.shape[1]-1
             #these are temporary values to be erased:
             moty_bottom=(y_1_mot-y_2_mot)/(y_1-y_2)*(0-y_2)+y_2_mot
-            moty_top=(y_1_mot-y_2_mot)/(y_1-y_2)*(self.pixel.image.shape[1]-1-y_2)+y_2_mot
+            moty_top=(y_1_mot-y_2_mot)/(y_1-y_2)*(self.image.shape[1]-1-y_2)+y_2_mot
             
             self.motimage_extent+=[moty_bottom, moty_top]
+            
             self.reloadimagewithextent()
         self.remaining_clicks_for_scale-=1
         
