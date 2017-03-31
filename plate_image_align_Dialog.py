@@ -1,4 +1,5 @@
 import matplotlib.image as mpimg
+import scipy
 
 from platemap_ui import *
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
