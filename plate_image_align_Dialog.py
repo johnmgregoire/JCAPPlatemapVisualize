@@ -291,23 +291,32 @@ class plateimagealignDialog(QDialog):
             self.temp_pixelval_motorval=(xc, motorval)
             self.motimage_extent=[]
         elif self.remaining_clicks_for_scale==3:#second x
+            x_1=self.temp_pixelval_motorval[0]
+            x_2=xc
+            x_1_mot=self.temp_pixelval_motorval[1]
+            x_2_mot=motorval
+            
             #TODO
             #here the pixels clicked are self.temp_pixelval_motorval[0] and xc and the motor values those refere to are self.first_motx_pixelx[1] and motorval. calculate the linear transofmration from there
             #calculate motx_left corresponding to pixel 0. calculate motx_right corresponding to pixel self.image.shape[0]-1
             
             #these are temporary values to be erased:
-            motx_left=-6.
-            motx_right=100.
+            motx_left=(x_1_mot-x_2_mot)/(x_1-x_2)*(0-x_2)+x_2_mot
+            motx_right=(x_1_mot-x_2_mot)/(x_1-x_2)*(self.image.shape[0]-x_2)+x_2_mot
             self.motimage_extent+=[motx_left, motx_right]
         elif self.remaining_clicks_for_scale==2:#first y
             self.temp_pixelval_motorval=(yc, motorval)
         elif self.remaining_clicks_for_scale==1:#seonc dy, which means all clicks are done
+            y_1=self.temp_pixelval_motorval[0]
+            y_2=yc
+            y_1_mot=self.temp_pixelval_motorval[1]
+            y_2_mot=motorval
             #TODO
             #here the pixels clicked are self.temp_pixelval_motorval[0] and yc and the motor values those refere to are self.first_motx_pixelx[1] and motorval. calculate the linear transofmration from there
             #calculate moty_bottom corresponding to pixel 0. calculate moty_top corresponding to pixel self.image.shape[1]-1
             #these are temporary values to be erased:
-            moty_bottom=-13
-            moty_top=79
+            moty_bottom=(y_1_mot-y_2_mot)/(y_1-y_2)*(0-y_2)+y_2_mot
+            moty_top=(y_1_mot-y_2_mot)/(y_1-y_2)*(self.pixel.image.shape[1]-1-y_2)+y_2_mot
             
             self.motimage_extent+=[moty_bottom, moty_top]
             self.reloadimagewithextent()
@@ -400,13 +409,14 @@ class plateimagealignDialog(QDialog):
     def update_xmotor_interpolator(self):
         #TODO: self.calib__dlist is a list and every value has motor x,y and platemap x,y values to build 2 interp2d functions needed below
         
-        xp_boundary=numpy.array([d['x'] for d in self.calib__dlist])
-        yp_boundary=numpy.array([d['y'] for d in self.calib__dlist])
-        xm_boundary=numpy.array([d['motx'] for d in self.calib__dlist])
-        ym_boundary=numpy.array([d['moty'] for d in self.calib__dlist])
+        xp_calib=numpy.array([d['x'] for d in self.calib__dlist])
+        yp_calib=numpy.array([d['y'] for d in self.calib__dlist])
+        xm_calib=numpy.array([d['motx'] for d in self.calib__dlist])
+        ym_calib=numpy.array([d['moty'] for d in self.calib__dlist])
         
-        self.calc_motx_from_pmxy=lambda pmx, pmy: pmx#TODO: replace pmx here with the interpolator function, and similarly for pmy below
-        self.calc_moty_from_pmxy=lambda pmx, pmy: pmy
+        self.calc_motx_from_pmxy=lambda pmx, pmy: scipy.interpolate.griddata((xp_calib,yp_calib),xm_calib,(pmx,pmy),method='linear')
+        #TODO: replace pmx here with the interpolator function, and similarly for pmy below
+        self.calc_moty_from_pmxy=lambda pmx, pmy: scipy.interpolate.griddata((xp_calib,yp_calib),ym_calib,(pmx,pmy),method='linear')
         
     def plotselect(self):
         self.compLineEdit.setText(','.join(['%.2f' %n for n in self.comp[self.selectind]]))
