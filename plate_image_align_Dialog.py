@@ -94,8 +94,14 @@ class plateimagealignDialog(QDialog):
         savesampleButton.setText("save select\nsample IDs")
         QObject.connect(savesampleButton, SIGNAL("pressed()"), self.writesamplelist)
         
-
-
+        pckinfoPushButton=QPushButton()
+        pckinfoPushButton.setText("open .pck dict\nwith motor x,y")
+        QObject.connect(pckinfoPushButton, SIGNAL("pressed()"), self.openpckinfo)
+        
+        genmapfilePushButton=QPushButton()
+        genmapfilePushButton.setText("make .map\nfile")
+        QObject.connect(genmapfilePushButton, SIGNAL("pressed()"), self.genmapfile)
+        
         self.ctrlgriditems=[\
         (fileLineEditLabel, self.fileLineEdit, 0, 0),\
         (codesLineEditLabel, self.codesLineEdit, 1, 0),\
@@ -122,6 +128,8 @@ class plateimagealignDialog(QDialog):
         ctrllayout.addWidget(remxy, 3, 2)
         ctrllayout.addWidget(addSample, 4, 1)
         ctrllayout.addWidget(remSample, 4, 2)
+        ctrllayout.addWidget(pckinfoPushButton, 5, 1)
+        ctrllayout.addWidget(genmapfilePushButton, 5, 2)
 
         
         self.browser = QTextBrowser()
@@ -155,12 +163,120 @@ class plateimagealignDialog(QDialog):
         self.plotw_motimage.fig.canvas.draw()
         self.manual_motimage_scale()
         self.selectind=None
+        self.infox=None
+        self.infoy=None
     
+    def openpckinfo(self):
+        p=mygetopenfile(parent=self, markstr='select info .pck file')
+        if p is None or p=='':
+            return
+        with open(p, mode='r') as f:
+            d=pickle.load(f)
+        if not isinstance(d, dict):
+            messageDialog(self, title='ERROR: .pck must be a dictionary').exec_()
+            return
+        xkeys=[k for k in d.keys() if k.startswith('x')]
+        ykeys=[k for k in d.keys() if k.startswith('y')]
+        if len(xkeys)==1 and len(ykeys)==1:
+            xk=xkeys[0]
+            yk=ykeys[0]
+        else:
+            ans=userinputcaller(self, inputs=[\
+                ('key for \nmotor x\narray', str, '' if len(xkeys)==0 else  xkeys[1] ), \
+                ('key for \nmotor y\narray', str, '' if len(ykeys)==0 else  ykeys[1] ), \
+                    ], title='Options for selecting samples',  cancelallowed=True)
+            if ans is None:
+                return
+            xk, yk=ans
+        self.infox=numpy.array(d[xk])
+        self.infoy=numpy.array(d[yk])
+    def genmapfile(self):
+        tryagain=True
+        while tryagain and not (isinstance(self.infox, numpy.ndarray) and isinstance(self.infoy, numpy.ndarray)):
+            tryagain=False
+            self.openpckinfo()
+        if not (isinstance(self.infox, numpy.ndarray) and isinstance(self.infoy, numpy.ndarray)):
+            return
+            
+        ans=\
+         userinputcaller(self, inputs=[('sample shape\0=circle,1=square', int, '0'), \
+                                                    ('sample\nwidth(mm)', float, '1.'), \
+                                                    ('bcknd_shape\n0,1 or -1=none', int, '-1'), \
+                                                    ('bcknd min\nwidth(mm)', float, '1.1'), \
+                                                    ('bcknd max\nwidth(mm)', float, '1.49'), \
+                                                    ('1 for remove\nduplicates', int, '1'), \
+         ], title='Options for selecting samples',  cancelallowed=True)
+        if ans is None:
+            return
+        smp_is_square, smp_width, bcknd_is_square,  bcknd_min_width, backdn_max_width, removedups=ans
+        
+        xarr=self.infox
+        yarr=self.infoy
+        smp_inds_list=[]
+        allinds=set([])
+        warningbool=False
+        for selind in self.platemapselectinds:
+            pmd=self.platemapdlist[selind]
+            smp, xcen, ycen=pmd['Sample'], pmd['motx'], pmd['moty']
+            if smp_is_square==0:
+                inds=numpy.where(((xarr-xcen)**2+(yarr-ycen)**2)<=smp_width**2)[0]
+            else:
+                a, b=xcen+numpy.array([-0.5, 0.5])*smp_width
+                c, d=xcen+numpy.array([-0.5, 0.5])*smp_width
+                inds=numpy.where((xarr>=a)&(xarr<=b)&(yarr>=c)&(yarr<=d))[0]
+            if removedups:
+                indsunique=sorted(list(set(inds).difference(allinds)))
+            else:
+                indsunique=inds
+            if len(indsunique)!=len(inds):
+                print 'not all inds used in sample %d because Raman spectra were used in other sample' %smp
+                warningbool=True
+            elif len(indsunique)==0:
+                print 'no matches found for sample ', smp
+                warningbool=True
+            smp_inds_list+=[(smp, indsunique)]
+            allinds=allinds.union(indsunique)
+            if bcknd_is_square>=0:
+                if bcknd_is_square==0:
+                    inds=numpy.where(\
+                        (((xarr-xcen)**2+(yarr-ycen)**2)<=backdn_max_width**2)&\
+                        (((xarr-xcen)**2+(yarr-ycen)**2)>backdn_min_width**2)\
+                    )[0]
+                else:
+                    a, b=xcen+numpy.array([-0.5, 0.5])*backdn_max_width
+                    c, d=xcen+numpy.array([-0.5, 0.5])*backdn_max_width
+                    inds=numpy.where((xarr>=a)&(xarr<=b)&(yarr>=c)&(yarr<=d))[0]
+                    a, b=xcen+numpy.array([-0.5, 0.5])*backdn_min_width
+                    c, d=xcen+numpy.array([-0.5, 0.5])*backdn_min_width
+                    badinds=numpy.where((xarr>=a)&(xarr<=b)&(yarr>=c)&(yarr<=d))[0]
+                    inds=sorted(list(set(inds).difference(badinds)))
+                if removedups:
+                    indsunique=sorted(list(set(inds).difference(allinds)))
+                else:
+                    indsunique=inds
+                if len(indsunique)!=len(inds):
+                    print 'not all inds used in sample %d because Raman spectra were used in other sample' %smp
+                    warningbool=True
+                elif len(indsunique)==0:
+                    print 'no matches found for sample ', smp
+                    warningbool=True
+                smp_inds_list+=[(-smp, indsunique)]
+                allinds=allinds.union(indsunique)
+        if warningbool:
+            msg='THERE WERE ERRORS IN MATCHING - SEE PYTHON SHELL'
+        else:
+            msg='Select .map file for saving match results'
+        p=mygetsavefile(parent=self, markstr=msg, filename='.map' )
+        if p is None or len(p)==0:
+            return
+        with open(p, mode='w') as f:
+            f.write('\n'.join(['%d:%s' %(smpv, ','.join(['%d' %i for i in indsv])) for smpv, indsv in smp_inds_list]))
+            
     def manual_motimage_scale(self):
         motorcalstr=userinputcaller(self, inputs=[('right click and enter x value then \nrepeat for 2nd x and 2 y values.\nThis is all in motor coordinates in mm \nto set the scale of the image.'+\
             '\nIf you know the motor values for left,right,bottom,top\nyou can enter them here:'
             , str)], \
-            title='instructions for image calibration',  cancelallowed=True)[0]
+            title='instructions for image calibration',  cancelallowed=False)[0]
         if motorcalstr.count(',')==3:
             self.motimage_extent=[float(v.strip()) for v in motorcalstr.split(',')]
             self.remaining_clicks_for_scale=0
