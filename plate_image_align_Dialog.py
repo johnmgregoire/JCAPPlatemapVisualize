@@ -210,8 +210,8 @@ class plateimagealignDialog(QDialog):
          userinputcaller(self, inputs=[('sample shape\n0=circle,1=square', int, '0'), \
                                                     ('sample\nwidth(mm)', float, '1.'), \
                                                     ('bcknd_shape\n0,1 or -1=none', int, '-1'), \
-                                                    ('bcknd min\nwidth(mm)', float, '1.1'), \
-                                                    ('bcknd max\nwidth(mm)', float, '1.49'), \
+                                                    ('bcknd min\nwidth(mm)', float, '1.5'), \
+                                                    ('bcknd max\nwidth(mm)', float, '1.8'), \
                                                     ('1 for remove\nduplicates', int, '1'), \
          ], title='Options for selecting samples',  cancelallowed=True)
         if ans is None:
