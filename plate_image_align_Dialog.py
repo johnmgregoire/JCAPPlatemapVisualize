@@ -5,7 +5,7 @@ from platemap_ui import *
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 
 class plateimagealignDialog(QDialog):
-    def __init__(self, parent=None, title='', folderpath=None):
+    def __init__(self, parent=None, title='', folderpath=None, manual_image_init_bool=True):
         super(plateimagealignDialog, self).__init__(parent)
         self.parent=parent
 #        self.echem30=echem30axesWidget()
@@ -158,20 +158,27 @@ class plateimagealignDialog(QDialog):
         self.linefields=[('%d', 'Sample'), ('%.3f', 'motx'), ('%.3f', 'moty'), ('%.2f', 'x'), ('%.2f', 'y'), ('%.2f', 'A'), ('%.2f', 'B'), ('%.2f', 'C'), ('%.2f', 'D'), ('%d', 'code')]
         self.clearcalibpoints()
         
+        self.selectind=None
+        self.infox=None
+        self.infoy=None
+        if manual_image_init_bool:
+            self.manual_image_init()
+        else:
+            self.remaining_clicks_for_scale=0#extent better be set by some other means
+        self.knownblobsdict=None#keys are (x,y) and vals are flattened data array inds
+    
+    def manual_image_init(self):
         p=mygetopenfile(parent=self, markstr='select image of samples with x,y motors horizontal,vertical')
         self.image=mpimg.imread(p)
         self.plotw_motimage.axes.imshow(self.image, origin='lower', interpolation='none', aspect=1)
         self.plotw_motimage.fig.canvas.draw()
         self.manual_motimage_scale()
-        self.selectind=None
-        self.infox=None
-        self.infoy=None
-    
-    def openpckinfo(self):
-        p=mygetopenfile(parent=self, markstr='select info .pck file')
-        if p is None or p=='':
-            return
-        with open(p, mode='r') as f:
+    def openpckinfo(self, p=None):
+        if p is None:
+            p=mygetopenfile(parent=self, markstr='select info .pck file')
+            if p is None or p=='':
+                return
+        with open(p, mode='rb') as f:
             d=pickle.load(f)
         if not isinstance(d, dict):
             messageDialog(self, title='ERROR: .pck must be a dictionary').exec_()
@@ -191,8 +198,8 @@ class plateimagealignDialog(QDialog):
             xk, yk=ans
         self.infox=numpy.array(d[xk])
         self.infoy=numpy.array(d[yk])
-    def genmapfile(self):
-        tryagain=True
+    def genmapfile(self, usealreadyloadedpck=False):
+        tryagain=not usealreadyloadedpck
         while tryagain and not (isinstance(self.infox, numpy.ndarray) and isinstance(self.infoy, numpy.ndarray)):
             tryagain=False
             self.openpckinfo()
@@ -209,17 +216,24 @@ class plateimagealignDialog(QDialog):
          ], title='Options for selecting samples',  cancelallowed=True)
         if ans is None:
             return
-        smp_is_square, smp_width, bcknd_is_square,  bcknd_min_width, backdn_max_width, removedups=ans
+        self.perform_genmapfile(*ans)
+        
+    def perform_genmapfile(self, smp_is_square, smp_width, bcknd_is_square,  bcknd_min_width, bcknd_max_width, removedups, p=None):
+        smp_width/=2. #diameter to radius
+        bcknd_min_width/=2. #diameter to radius
+        bcknd_max_width/=2. #diameter to radius
         
         xarr=self.infox
         yarr=self.infoy
-        smp_inds_list=[]
+        self.smp_inds_list__map=[]
         allinds=set([])
         warningbool=False
         for selind in self.platemapselectinds:
             pmd=self.platemapdlist[selind]
-            smp, xcen, ycen=pmd['Sample'], pmd['motx'], pmd['moty']
-            if smp_is_square==0:
+            smp, xcen, ycen=pmd['Sample'], float(pmd['motx']), float(pmd['moty'])
+            if (xcen, ycen) in self.knownblobsdict.keys():
+                inds=self.knownblobsdict[(xcen, ycen)]
+            elif smp_is_square==0:
                 inds=numpy.where(((xarr-xcen)**2+(yarr-ycen)**2)<=smp_width**2)[0]
             else:
                 a, b=xcen+numpy.array([-0.5, 0.5])*smp_width
@@ -235,20 +249,21 @@ class plateimagealignDialog(QDialog):
             elif len(indsunique)==0:
                 print 'no matches found for sample ', smp
                 warningbool=True
-            smp_inds_list+=[(smp, indsunique)]
-            allinds=allinds.union(indsunique)
+            if len(indsunique)>0:
+                self.smp_inds_list__map+=[(smp, indsunique)]
+                allinds=allinds.union(indsunique)
             if bcknd_is_square>=0:
                 if bcknd_is_square==0:
                     inds=numpy.where(\
-                        (((xarr-xcen)**2+(yarr-ycen)**2)<=backdn_max_width**2)&\
-                        (((xarr-xcen)**2+(yarr-ycen)**2)>backdn_min_width**2)\
+                        (((xarr-xcen)**2+(yarr-ycen)**2)<=bcknd_max_width**2)&\
+                        (((xarr-xcen)**2+(yarr-ycen)**2)>bcknd_min_width**2)\
                     )[0]
                 else:
-                    a, b=xcen+numpy.array([-0.5, 0.5])*backdn_max_width
-                    c, d=xcen+numpy.array([-0.5, 0.5])*backdn_max_width
+                    a, b=xcen+numpy.array([-0.5, 0.5])*bcknd_max_width
+                    c, d=xcen+numpy.array([-0.5, 0.5])*bcknd_max_width
                     inds=numpy.where((xarr>=a)&(xarr<=b)&(yarr>=c)&(yarr<=d))[0]
-                    a, b=xcen+numpy.array([-0.5, 0.5])*backdn_min_width
-                    c, d=xcen+numpy.array([-0.5, 0.5])*backdn_min_width
+                    a, b=xcen+numpy.array([-0.5, 0.5])*bcknd_min_width
+                    c, d=xcen+numpy.array([-0.5, 0.5])*bcknd_min_width
                     badinds=numpy.where((xarr>=a)&(xarr<=b)&(yarr>=c)&(yarr<=d))[0]
                     inds=sorted(list(set(inds).difference(badinds)))
                 if removedups:
@@ -261,17 +276,19 @@ class plateimagealignDialog(QDialog):
                 elif len(indsunique)==0:
                     print 'no matches found for sample ', smp
                     warningbool=True
-                smp_inds_list+=[(-smp, indsunique)]
-                allinds=allinds.union(indsunique)
+                if len(indsunique)>0:
+                    self.smp_inds_list__map+=[(-smp, indsunique)]
+                    allinds=allinds.union(indsunique)
         if warningbool:
             msg='THERE WERE ERRORS IN MATCHING - SEE PYTHON SHELL'
         else:
             msg='Select .map file for saving match results'
-        p=mygetsavefile(parent=self, markstr=msg, filename='.map' )
+        if p is None:
+            p=mygetsavefile(parent=self, markstr=msg, filename='.map' )
         if p is None or len(p)==0:
             return
         with open(p, mode='w') as f:
-            f.write('\n'.join(['%d:%s' %(smpv, ','.join(['%d' %i for i in indsv])) for smpv, indsv in smp_inds_list]))
+            f.write('\n'.join(['%d:%s' %(smpv, ','.join(['%d' %i for i in indsv])) for smpv, indsv in self.smp_inds_list__map]))
             
     def manual_motimage_scale(self):
         motorcalstr=userinputcaller(self, inputs=[('right click and enter x value then \nrepeat for 2nd x and 2 y values.\nThis is all in motor coordinates in mm \nto set the scale of the image.'+\
@@ -326,6 +343,9 @@ class plateimagealignDialog(QDialog):
         
     def reloadimagewithextent(self):
         self.imageextentLineEdit.setText(','.join(['%.2f' %v for v in self.motimage_extent]))
+        #right now only support scaling in the form of orienting/flipping the motor image to match the platemap
+        self.xscale_platemp_wrt_mot=1 if self.motimage_extent[1]>self.motimage_extent[0] else -1
+        self.yscale_platemp_wrt_mot=1 if self.motimage_extent[3]>self.motimage_extent[2] else -1
         self.plotw_motimage.axes.cla()
         self.plotw_motimage.axes.imshow(self.image, origin='lower', interpolation='none', aspect=1, extent=self.motimage_extent)
         self.plotw_motimage.fig.canvas.draw()
@@ -342,13 +362,22 @@ class plateimagealignDialog(QDialog):
         #xy plot
         self.plotw_plate.axes.scatter(self.x, self.y, c=self.col, s=s_plate, marker='s', edgecolor='none')
         
+        motcalibsmps=[d['sample_no'] for d in self.calib__dlist]
+        
         for i in self.platemapselectinds:
             circ = pylab.Circle((self.x[i], self.y[i]), radius=1, edgecolor='r', facecolor='none')
             self.plotw_plate.axes.add_patch(circ)
         
+            pmd=self.platemapdlist[i]
+            if 'motx' in pmd.keys() and 'moty' in pmd.keys() and numpy.logical_not(numpy.isnan(pmd['motx']+pmd['moty'])):
+                smp, xcen, ycen=pmd['Sample'], pmd['motx'], pmd['moty']
+                #if not smp in motcalibsmps:
+                self.plotw_motimage.axes.plot(xcen, ycen, 'w+', ms=6)
+                
+                
         self.plotw_plate.axes.set_xlim(min(self.x)-3, max(self.x)+3)
         self.plotw_plate.axes.set_ylim(min(self.y)-3, max(self.y)+3)
-        
+        self.plotw_motimage.fig.canvas.draw()
         self.plotw_plate.fig.canvas.draw()
         
         #comp plot
@@ -396,10 +425,41 @@ class plateimagealignDialog(QDialog):
                     idialog=messageDialog(self, title='ERROR: first click on plate image to select new sample')
                     idialog.exec_()
                     return
-                self.calib__dlist+=[dict({}, \
-                    x=self.x[self.selectind], y=self.y[self.selectind], sample_no=self.platemapdlist[self.selectind]['Sample'], ind=self.selectind, \
-                    motx=xc, moty=yc\
-                                                 )]
+                calibmodified=False
+                if not self.knownblobsdict is None:
+                    xyl=self.knownblobsdict.keys()
+                    distfromknown=((numpy.array(xyl)-numpy.array([xc, yc])[numpy.newaxis, :])**2).sum(axis=1)**.5
+                    if min(distfromknown)<0.5: #this is 0.5 mm critical distance hard coded for 1 mm spot sizes
+                        knownind=numpy.argmin(distfromknown)
+                        xk0, yk0=xyl[knownind]
+                        distfromselectknown=((numpy.array(xyl)-numpy.array(xyl[knownind])[numpy.newaxis, :])**2).sum(axis=1)**.5
+                        knownindsinorderfromclick=numpy.argsort(distfromselectknown)
+                        for ind in knownindsinorderfromclick:
+                            xk1, yk1=xyl[ind]
+                            dx=(xk1-xk0)*self.xscale_platemp_wrt_mot
+                            dy=(yk1-yk0)*self.yscale_platemp_wrt_mot
+                            xfakeplateclick=dx+self.x[self.selectind]
+                            yfakeplateclick=dy+self.y[self.selectind]
+                            dist=((self.x-xfakeplateclick)**2+(self.y-yfakeplateclick)**2)**.5
+                            if min(dist)<1.:
+                                fakeselectind=numpy.argmin(dist)
+                                calibmodified=True
+                                self.calib__dlist+=[dict({}, \
+                                    x=self.x[fakeselectind], y=self.y[fakeselectind], sample_no=self.platemapdlist[fakeselectind]['Sample'], ind=fakeselectind, \
+                                    motx=xk1, moty=yk1\
+                                                                 )]
+                            else:
+                                break#add calib samples starting from the closes to the actual motoro click until one fails then don't go further because if rotation misalignment may get the wrong association
+                if not calibmodified:
+                    self.calib__dlist+=[dict({}, \
+                        x=self.x[self.selectind], y=self.y[self.selectind], sample_no=self.platemapdlist[self.selectind]['Sample'], ind=self.selectind, \
+                        motx=xc, moty=yc\
+                                                     )]
+                                                     
+                xarr=[d['motx'] for d in self.calib__dlist]
+                yarr=[d['moty'] for d in self.calib__dlist]
+                self.plotw_motimage.axes.plot(xarr, yarr, 'wo', ms=4)
+                self.plotw_motimage.fig.canvas.draw()
                 print 'calibration data:\n', self.calib__dlist
                 if len(self.calib__dlist)>=3:
                     self.update_xmotor_interpolator()
@@ -450,10 +510,11 @@ class plateimagealignDialog(QDialog):
         self.plot()#would be nice to only have to plot overlay of selected samples
 
         
-    def openAddFile(self):
-        p=mygetopenfile(parent=self, markstr='select platemap .txt')
-        if p is None or p=='':
-            return
+    def openAddFile(self, p=None):
+        if p is None:
+            p=mygetopenfile(parent=self, markstr='select platemap .txt')
+            if p is None or p=='':
+                return
         self.fileLineEdit.setText(p)
 
         self.platemapdlist=readsingleplatemaptxt(p)
