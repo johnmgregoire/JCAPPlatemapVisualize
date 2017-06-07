@@ -160,7 +160,7 @@ class platemapDialog(QDialog):
     def extractlist_dlistkey(self, k):
         return [d[k] for d in self.platemapdlist]
         
-    def plot(self): #self.platemapselectinds
+    def plot(self, draw=True): #self.platemapselectinds
 
 
         self.plotw_plate.axes.cla()
@@ -186,10 +186,10 @@ class platemapDialog(QDialog):
             fom[i]='r'
         fom=numpy.array(fom)
         permcomp=self.comp[:, self.comppermuteinds]
-        self.stackplotfcn(permcomp, fom, self.plotw_stack_stpl, s=8)
+        #self.stackplotfcn(permcomp, fom, self.plotw_stack_stpl, s=8)
         
-        
-        self.plotw_stack.fig.canvas.draw()
+        if draw:
+            self.plotw_stack.fig.canvas.draw()
         #browser text
         headline='\t'.join([k for fmtstr, k in self.linefields])
         selectsamplesstr='\n'.join([headline]+self.selectsamplelines)
@@ -253,12 +253,13 @@ class platemapDialog(QDialog):
         d=self.platemapdlist[self.selectind]
         return '\t'.join([fmtstr %d[k] for fmtstr, k in self.linefields])
         
-    def addtoselectsamples(self):# self.selectind
+    def addtoselectsamples(self, plotbool=True, draw=True):# self.selectind
         if self.selectind in self.platemapselectinds:
             return
         self.platemapselectinds+=[self.selectind]
         self.selectsamplelines+=[self.sampleline_ind()]
-        self.plot()#would be nice to only have to plot overlay of selected samples
+        if plotbool:
+            self.plot(draw=draw)#would be nice to only have to plot overlay of selected samples
     
     def setupcomppermute(self, replot=True):
         i=self.ternstackComboBox.currentIndex()
@@ -269,13 +270,14 @@ class platemapDialog(QDialog):
             self.plot()
 
     
-    def remfromselectsamples(self):# self.selectind
+    def remfromselectsamples(self, plotbool=True, draw=True):# self.selectind
         if not self.selectind in self.platemapselectinds:
             return
         i=self.platemapselectinds.index(self.selectind)
         self.platemapselectinds.pop(i)
         self.selectsamplelines.pop(i)
-        self.plot()#would be nice to only have to plot overlay of selected samples
+        if plotbool:
+            self.plot(draw=draw)#would be nice to only have to plot overlay of selected samples
     
     def stackedplotsetup(self):
         a=numpy.sort(self.comp[:,0])
@@ -345,11 +347,12 @@ class platemapDialog(QDialog):
             print 'error adding samples'
             return
         for i in inds:
+            plotbool=(i==inds[-1])
             self.selectind=i
             if remove:
-                self.remfromselectsamples()
+                self.remfromselectsamples(plotbool=plotbool)
             else:
-                self.addtoselectsamples()
+                self.addtoselectsamples(plotbool=plotbool)
 #            if a == sampleNo:
 #                self.browser.append(line)
 #        print sampleNo
