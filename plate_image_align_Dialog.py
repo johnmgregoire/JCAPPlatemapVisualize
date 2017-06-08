@@ -218,7 +218,7 @@ class plateimagealignDialog(QDialog):
             return
         self.perform_genmapfile(*ans)
         
-    def perform_genmapfile(self, smp_is_square, smp_width, bcknd_is_square,  bcknd_min_width, bcknd_max_width, removedups, p=None):
+    def perform_genmapfile(self, smp_is_square, smp_width, bcknd_is_square,  bcknd_min_width, bcknd_max_width, removedups, useknownblobs=True, p=None):
         smp_width/=2. #diameter to radius
         bcknd_min_width/=2. #diameter to radius
         bcknd_max_width/=2. #diameter to radius
@@ -231,7 +231,7 @@ class plateimagealignDialog(QDialog):
         for selind in self.platemapselectinds:
             pmd=self.platemapdlist[selind]
             smp, xcen, ycen=pmd['Sample'], float(pmd['motx']), float(pmd['moty'])
-            if (xcen, ycen) in self.knownblobsdict.keys():
+            if useknownblobs and (xcen, ycen) in self.knownblobsdict.keys():
                 inds=self.knownblobsdict[(xcen, ycen)]
             elif smp_is_square==0:
                 inds=numpy.where(((xarr-xcen)**2+(yarr-ycen)**2)<=smp_width**2)[0]
