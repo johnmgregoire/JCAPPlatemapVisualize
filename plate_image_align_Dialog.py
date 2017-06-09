@@ -166,6 +166,7 @@ class plateimagealignDialog(QDialog):
         else:
             self.remaining_clicks_for_scale=0#extent better be set by some other means
         self.knownblobsdict=None#keys are (x,y) and vals are flattened data array inds
+        self.motimage_sample_marker_color='w'
     
     def manual_image_init(self):
         p=mygetopenfile(parent=self, markstr='select image of samples with x,y motors horizontal,vertical')
@@ -372,7 +373,7 @@ class plateimagealignDialog(QDialog):
             if 'motx' in pmd.keys() and 'moty' in pmd.keys() and numpy.logical_not(numpy.isnan(pmd['motx']+pmd['moty'])):
                 smp, xcen, ycen=pmd['Sample'], pmd['motx'], pmd['moty']
                 #if not smp in motcalibsmps:
-                self.plotw_motimage.axes.plot(xcen, ycen, 'w+', ms=6)
+                self.plotw_motimage.axes.plot(xcen, ycen, '+', c=self.motimage_sample_marker_color, ms=6)
                 
                 
         self.plotw_plate.axes.set_xlim(min(self.x)-3, max(self.x)+3)
@@ -458,7 +459,7 @@ class plateimagealignDialog(QDialog):
                                                      
                 xarr=[d['motx'] for d in self.calib__dlist]
                 yarr=[d['moty'] for d in self.calib__dlist]
-                self.plotw_motimage.axes.plot(xarr, yarr, 'wo', ms=4)
+                self.plotw_motimage.axes.plot(xarr, yarr, 'o', c=self.motimage_sample_marker_color, ms=4)
                 self.plotw_motimage.fig.canvas.draw()
                 print 'calibration data:\n', self.calib__dlist
                 if len(self.calib__dlist)>=3:
