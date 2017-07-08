@@ -167,6 +167,7 @@ class plateimagealignDialog(QDialog):
             self.remaining_clicks_for_scale=0#extent better be set by some other means
         self.knownblobsdict=None#keys are (x,y) and vals are flattened data array inds
         self.motimage_sample_marker_color='w'
+        self.mindistformatchingtoknownposition=0.5
     
     def manual_image_init(self):
         p=mygetopenfile(parent=self, markstr='select image of samples with x,y motors horizontal,vertical')
@@ -442,7 +443,7 @@ class plateimagealignDialog(QDialog):
                             xfakeplateclick=dx+self.x[self.selectind]
                             yfakeplateclick=dy+self.y[self.selectind]
                             dist=((self.x-xfakeplateclick)**2+(self.y-yfakeplateclick)**2)**.5
-                            if min(dist)<1.:
+                            if min(dist)<self.mindistformatchingtoknownposition:
                                 fakeselectind=numpy.argmin(dist)
                                 calibmodified=True
                                 self.calib__dlist+=[dict({}, \
